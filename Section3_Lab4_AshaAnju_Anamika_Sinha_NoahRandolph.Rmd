@@ -1,0 +1,11 @@
+---
+title: "Lab 4: Reducing Crime"
+author: "Asha Anju, Anamika Sinha, Noah Randolph"
+date: "8/14/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
