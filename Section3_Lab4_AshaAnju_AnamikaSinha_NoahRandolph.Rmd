@@ -23,7 +23,7 @@ Data = read.csv("crime_v2.csv")
 summary(Data)
 ```
 
-There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. These proportions are replaced with NA values below, so that the remaining row of values associated with counties are still usable for models not involving these variables.
+There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. These proportions are replaced with NA values below, so that the remaining row of values associated with each county are still usable for models not involving these variables.
 
 ```{r}
 tail(sort(Data$probsen))
@@ -41,11 +41,11 @@ We first look at the response variable, _crime_, representing the number of each
 hist(Data$crime, main = "County Crime Rates", xlab = "crimes committed per person")
 ```
 
-The histogram above shows an approximatley normal distribution with a positive skew, due to the fact that crime rates cannot drop below zero. No outliars are present. 
+The histogram above shows an approximatley normal distribution with a positive skew, likely due to the fact that crime rates cannot be less than zero. No outliars are present. 
 
-Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wage, and the proportion of males between ages 15 and 24, _ymale_. 
+Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wages (which are spread across several variables), and the proportion of males between ages 15 and 24, _ymale_. 
 
-The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
+The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively, in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
 
 ```{r}
 length(Data$probarr)
@@ -54,6 +54,15 @@ hist(Data$probarr, main = "Proportion of County Crimes Resulting in Arrests",
      xlab = "Proportion of Crimes Resulting in Arrests")
 ```
 
-The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
+The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem (CLT) can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
 
+The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
 
+```{r}
+length(Data$avgsen)
+
+hist(Data$avgsen, main = "Average County Prison Sentence Length",
+     xlab = "days")
+```
+
+The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
