@@ -89,7 +89,21 @@ The variable describing people per square mile, _density_, is a more detailed in
 ```{r}
 length(Data$density)
 
-hist(Data$density, main = "Population Density",
+hist(Data$density, main = "Density",
      xlab = "people per square mile")
 ```
 
+Density's distribution has a strong positive skew, due to the zero bound. Despite the skew, the CLT can still be relied upon for population inferences, as the number of observations, 90, is sufficient.
+
+Average wages, _avgwage_ is a variable created below by concatenating each wage variable in the dataset together. In this way, average wages for each county can be modeled against crime.
+
+```{r}
+avgwage = (Data$wagecon + Data$wagetuc + Data$wagetrd + Data$wagefir +
+        Data$wageser + Data$wagemfg + Data$wagefed + Data$wagesta + 
+                Data$wageloc)/9
+
+length(avgwage)
+hist(avgwage, main = "Average Wage", xlab = "US Dollars")
+```
+
+Average wage
