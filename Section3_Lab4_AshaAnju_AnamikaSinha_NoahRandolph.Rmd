@@ -61,8 +61,35 @@ The average prison sentence length, _avgsen_, like _probarr_, should also negati
 ```{r}
 length(Data$avgsen)
 
-hist(Data$avgsen, main = "Average County Prison Sentence Length",
+hist(Data$avgsen, main = "Average Prison Sentence Length",
      xlab = "days")
 ```
 
 The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
+
+Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.
+
+```{r}
+length(Data$police)
+
+hist(Data$police, main = "Police Per Capita",
+     xlab = "police per capita")
+```
+
+There is a large spike at 0.001 to 0.002 police per capita and short tails on either side, with a positive skew, including an outliar at 0.009 to 0.010 police per capita. We investigate that observation further below.
+
+```{r}
+Data[Data$police > 0.005, ]
+```
+
+Noting that it is the same county which had values greater than 1 for _probsen_ and _probconv_ (which are now coded _NA_), the rest of county data does not indicate anything to be invalid. We note that the average sentence length of this county is maximum of all the counties, as seen in the initial summary, and the percent minority is the lowest of all the counties.
+
+The variable describing people per square mile, _density_, is a more detailed indicator of urban versus non-urban environments than the boolean varianble, _urban_. Density should also influence crime rate, either positively or negatively, since 'haves' and 'havenots' become closer together at higher densities, yet higher density areas also result in more witnesses to deter face-to-face crime.
+
+```{r}
+length(Data$density)
+
+hist(Data$density, main = "Population Density",
+     xlab = "people per square mile")
+```
+
