@@ -18,6 +18,11 @@ knitr::opts_chunk$set(echo = TRUE)
 We first load the data and note any anomalies, such as missing values, top-coded or bottom-coded variables, or not-applicable values.
 
 ```{r load data}
+library(sandwich)
+library(lmtest)
+library(car)
+library(stargazer)
+
 setwd("~/Documents/W203_Statistics/Labs/Lab_4/Lab4Repository")
 Data = read.csv("crime_v2.csv")
 summary(Data)
@@ -38,10 +43,11 @@ Data[Data$probconv > 1, 'probconv'] = NA
 We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person.
 
 ```{r}
-hist(Data$crime, main = "County Crime Rates", xlab = "crimes committed per person")
+hist(Data$crime, breaks = 20, main = "County Crime Rates", xlab = "crimes committed per person")
 ```
 
 The histogram above shows an approximatley normal distribution with a positive skew, likely due to the fact that crime rates cannot be less than zero. No outliars are present. 
+
 
 Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wages (which are spread across several variables), and the proportion of males between ages 15 and 24, _ymale_. 
 
@@ -50,7 +56,7 @@ The proportion of crimes resulting in arrests, _probarr_, should negatively infl
 ```{r}
 length(Data$probarr)
 
-hist(Data$probarr, main = "Proportion of County Crimes Resulting in Arrests",
+hist(Data$probarr, breaks = 16, main = "Proportion of County Crimes Resulting in Arrests",
      xlab = "Proportion of Crimes Resulting in Arrests")
 ```
 
@@ -59,10 +65,16 @@ The histogram above shows an approximately normal distribution. With 90 observat
 The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
 
 ```{r}
-length(Data$avgsen)
+hist(Data$probconv, breaks = 10, main = "Proportion Being Convicted After Arrest",
+     xlab = "Proportion")
+```
 
-hist(Data$avgsen, main = "Average Prison Sentence Length",
-     xlab = "days")
+
+```{r}
+length(Data$probsen)
+
+hist(Data$probsen, breaks = 20, main = "Proportion Being Sentenced After Conviction",
+     xlab = "Proportion")
 ```
 
 The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
@@ -72,9 +84,10 @@ Police per capita, _police_, should have negative influence on county crime rate
 ```{r}
 length(Data$police)
 
-hist(Data$police, main = "Police Per Capita",
+hist(Data$police, breaks = 20, main = "Police Per Capita",
      xlab = "police per capita")
 ```
+
 
 There is a large spike at 0.001 to 0.002 police per capita and short tails on either side, with a positive skew, including an outliar at 0.009 to 0.010 police per capita. We investigate that observation further below.
 
@@ -89,7 +102,7 @@ The variable describing people per square mile, _density_, is a more detailed in
 ```{r}
 length(Data$density)
 
-hist(Data$density, main = "Density",
+hist(Data$density, breaks = 20, main = "Density",
      xlab = "people per square mile")
 ```
 
@@ -103,7 +116,98 @@ avgwage = (Data$wagecon + Data$wagetuc + Data$wagetrd + Data$wagefir +
                 Data$wageloc)/9
 
 length(avgwage)
-hist(avgwage, main = "Average Wage", xlab = "US Dollars")
+hist(avgwage, breaks = 20, main = "Average Wage", xlab = "Wage")
 ```
 
-Average wage
+Average wage also has an approximately normal distribution, with a positive skew. 
+
+```{r}
+hist(Data$tax, breaks = 20)
+```
+
+
+```{r}
+hist(Data$ymale, breaks = 20)
+```
+
+```{r}
+hist(Data$pctmin, breaks = 20)
+```
+
+```{r}
+scatterplotMatrix(~ log(Data$ymale) + log(Data$police) + Data$pctmin +
+                          Data$density)
+```
+
+```{r}
+scatterplotMatrix(~ log(Data$police) + Data$probarr + Data$probconv +
+                          Data$probsen)
+```
+
+```{r}
+plot(jitter(Data$urban), jitter(Data$west))
+```
+
+```{r}
+plot(jitter(Data$urban), jitter(Data$central))
+```
+
+#### Model 1
+
+```{r}
+scaledcrime = Data$crime*100
+
+model1 = lm(scaledcrime ~ Data$probsen + log(Data$police))
+AIC1 = AIC(model1)
+plot(model1)
+
+vif(model1)
+
+# hist(model3$residuals, breaks = 50)
+# shapiro.test(model3$residuals)
+# bptest(model3)
+```
+
+#### Model 2
+
+```{r}
+model2 = lm(scaledcrime ~ Data$density + log(Data$ymale) + Data$probsen +
+                    log(Data$police) + Data$pctmin)
+AIC2 = AIC(model2)
+plot(model2)
+vif(model2)
+```
+
+#### Model 3
+
+```{r}
+model3 = lm(scaledcrime ~ Data$tax + Data$density + log(Data$ymale) +
+                    Data$probarr + Data$probconv + Data$probsen + Data$avgsen +
+                    Data$pctmin + Data$mix + log(Data$police) + avgwage +
+                    Data$central + Data$west)
+AIC3 = AIC(model3)
+plot(model3)
+vif(model3)
+```
+
+
+
+```{r}
+# Adjust standard errors
+cov1 = vcovHC(model1)
+robust_se1 = sqrt(diag(cov1))
+cov2 = vcovHC(model2)
+robust_se2 = sqrt(diag(cov2))
+cov3 = vcovHC(model3)
+robust_se3 = sqrt(diag(cov3))
+
+# Adjust F statistic 
+wald_results <- waldtest(model1, vcov = cov1)
+
+stargazer(model1, model2, model3, type = 'text',
+          se        = list(robust_se1, robust_se2, robust_se3),
+          omit.stat = "f",
+          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
+                             round(AIC3, 2))))
+```
+
