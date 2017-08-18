@@ -157,8 +157,9 @@ plot(jitter(urban), jitter(central))
 
 ```{r}
 scaledcrime = crime*100
+scaledpolice = police*100
 
-model1 = lm(scaledcrime ~ log(police) + probsen + probconv)
+model1 = lm(scaledcrime ~ scaledpolice + probsen + probconv)
 AIC1 = AIC(model1)
 plot(model1)
 
@@ -172,7 +173,7 @@ vif(model1)
 #### Model 2
 
 ```{r}
-model2 = lm(scaledcrime ~ log(police)+ probsen + probconv + density + pctmin +
+model2 = lm(scaledcrime ~ scaledpolice+ probsen + probconv + density + pctmin +
                     probconv)
 AIC2 = AIC(model2)
 plot(model2)
@@ -182,7 +183,7 @@ vif(model2)
 #### Model 3
 
 ```{r}
-model3 = lm(scaledcrime ~ log(police) + probsen + probconv + density + pctmin  +
+model3 = lm(scaledcrime ~ scaledpolice + probsen + probconv + density + pctmin +
                     probarr + ymale + avgsen +  mix + avgwage + central + west +
                     tax)
 AIC3 = AIC(model3)
