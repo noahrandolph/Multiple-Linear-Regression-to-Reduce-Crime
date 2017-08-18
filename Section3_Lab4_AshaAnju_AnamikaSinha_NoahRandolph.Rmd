@@ -32,11 +32,11 @@ attach(CrDat)
 There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. These proportions are replaced with NA values below, so that the remaining row of values associated with each county are still usable for models not involving these variables.
 
 ```{r}
-tail(sort(probsen))
-CrDat[probsen > 1, 'probsen'] = NA
-
-tail(sort(probconv), 11)
-CrDat[probconv > 1, 'probconv'] = NA
+# tail(sort(probsen))
+# CrDat[probsen > 1, 'probsen'] = NA
+# 
+# tail(sort(probconv), 11)
+# CrDat[probconv > 1, 'probconv'] = NA
 ```
 
 ## Model Building and Exploratory Data Analysis
