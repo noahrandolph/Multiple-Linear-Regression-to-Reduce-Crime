@@ -39,7 +39,7 @@ str(C)
 summary(C)
 ```
 ```{r}
-describe(C)
+#describe(C)
 ```
 ```{r}
 attach(C)
@@ -81,6 +81,23 @@ hist(C$probsen, breaks = 20,
      main = "Probability of sentencing", xlab = NULL)
 ```
 Probability of sentencing has a positive skew as well.Also there is value above 1 which is unreasonable.
+```{r}
+#C <- C[ "probsen" <= 1 & "probconv" <= 1 ,]
+#C <- C[ "probsen" <= 1, ]
+test <- subset(C, C$probsen <= 1 & C$probconv <= 1 )
+test1 <- subset(C, probsen <= 1 & probconv <= 1 )
+head(test1)
+```
+
+```{r}
+nrow(test)
+```
+
+
+```{r}
+nrow(C)
+head(C)
+```
 
 
 ```{r }
@@ -166,10 +183,18 @@ density, tax
 ```{r }
 plot(density, crime)
 ```
+```{r }
+plot(log(density), crime)
+```
+
 We see a clear positive correlation.
 ```{r }
 plot(tax, crime)
 ```
+```{r }
+plot(log(tax), crime)
+```
+
 #Looking at the relationship between police and crime. Common sense suggests that as the number of police per capita increases, crime should reduce. 
 ```{r }
 plot(police, crime)
@@ -234,8 +259,16 @@ vif(model3)
 ```{r}
 AIC(model3)
 ```
-
-
+```{r}
+# modeled with only the significant variables
+model4 = lm(crime ~ density + ymale + probconv + probsen + pctmin )
+coeftest(model4, vcov = vcovHC)
+plot(model4)
+vif(model4)
+```
+```{r}
+AIC(model4)
+```
 
 ```{r}
 fit <- lm(crime~density+probconv+probsen,data=C)
@@ -246,11 +279,117 @@ fit <- lm(crime~density+probconv+probsen,data=C)
 ```
 
 
+```{r}
+C[, "maxwage"] <- apply(C[, 16:24], 1, max)
+```
 
-#what is top coded and bottom coded
+```{r}
+C[, "minwage"] <- apply(C[, 16:24], 1, min)
+```
+
+```{r}
+C$wagediff <- C$maxwage - C$minwage
+```
+
+```{r}
+head(C)
+```
+```{r }
+plot(C$wagediff, C$crime)
+```
+```{r }
+plot(log(C$wagediff), C$crime)
+```
+
+```{r}
+model5 = lm(crime ~ tax + density + ymale + probarr + probconv + probsen  + pctmin + mix + wagediff + police, data = C)
+coeftest(model5, vcov = vcovHC)
+plot(model5)
+```
+
+```{r}
+model5 = lm(crime*1000 ~ tax + density + ymale + probarr + probconv + probsen  + pctmin + mix + wagediff + police, data = C)
+coeftest(model5, vcov = vcovHC)
+plot(model5)
+```
+```{r}
+AIC(model5)
+```
+
+```{r}
+model6 = lm(crime*1000 ~ tax + log(density)+ ymale + probarr + probconv + probsen  + pctmin + mix + wagediff + police, data = C)
+coeftest(model6, vcov = vcovHC)
+plot(model6)
+```
+```{r}
+AIC(model6)
+```
 
 
+#Converting crime into per 1000, probconv and probsen into percentage
+```{r}
+crime_scaled <- crime*1000
+pctconv <- probconv*100
+pctsen <- probsen*100
+police_scaled <- police*1000
+```
 
+
+```{r}
+as_model1 = lm(crime_scaled ~ log(police) + pctsen + pctconv +log(tax) +log(density))
+AIC1 = AIC(as_model1)
+plot(as_model1)
+summary(as_model1)
+vif(as_model1)
+```
+```{r}
+as_model1_pr = lm(crime_scaled ~ log(police) + pctsen + pctconv + log(density))
+AIC_pr1 = AIC(as_model1_pr)
+plot(as_model1_pr)
+summary(as_model1_pr)
+vif(as_model1_pr)
+```
+```{r}
+as_model1_pr1 = lm(crime_scaled ~ police_scaled + pctsen + pctconv + density)
+AIC_1_pr1 = AIC(as_model1_pr1)
+plot(as_model1_pr1)
+summary(as_model1_pr1)
+vif(as_model1_pr1)
+```
+
+```{r}
+as_model2 = lm(crime_scaled ~ police_scaled + pctsen + pctconv )
+AIC2 = AIC(as_model2)
+plot(as_model2)
+summary(as_model2)
+vif(as_model2)
+```
+```{r}
+as_model2 = lm(scaledcrime ~ scaledpolice+ pctsen + pctconv + density + pctmin)
+AIC2 = AIC(as_model2)
+plot(as_model2)
+vif(as_model2)
+summary(as_model2)
+```
+```{r}
+as_model2_pr = lm(crime_scaled ~ police + pctsen + pctconv + density + ymale + pctmin)
+AIC1 = AIC(as_model2_pr)
+plot(as_model2_pr)
+summary(as_model2_pr)
+vif(as_model2_pr)
+```
+
+```{r}
+as_model2_pr = lm(crime_scaled ~ log(police) + pctsen + pctconv + log(density) + ymale + pctmin)
+AIC_pr2 = AIC(as_model2_pr)
+plot(as_model2_pr)
+summary(as_model2_pr)
+vif(as_model2_pr)
+```
+```{r}
+AIC_pr1
+AIC_pr2
+```
 
 #urban has 8 rows only
 #33 are not in these three regions
