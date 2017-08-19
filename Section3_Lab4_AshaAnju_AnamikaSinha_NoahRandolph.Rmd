@@ -162,7 +162,7 @@ pctarr = probarr*100
 pctconv = probconv*100
 pctsen = probsen*100
 
-model1 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv)
+model1 = lm(scaledcrime ~ pctsen + pctconv + density)
 AIC1 = AIC(model1)
 plot(model1)
 
@@ -176,7 +176,7 @@ vif(model1)
 #### Model 2
 
 ```{r}
-model2 = lm(scaledcrime ~ scaledpolice+ pctsen + pctconv + density + pctmin)
+model2 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv + density + pctmin)
 AIC2 = AIC(model2)
 plot(model2)
 vif(model2)
