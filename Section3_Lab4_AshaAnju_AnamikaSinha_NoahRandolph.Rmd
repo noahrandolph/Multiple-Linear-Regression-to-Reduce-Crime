@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ...
 
-## Load Data & Initial Analysis
+## Load Data 
 
 We first load the data and note any anomalies, such as missing values, top-coded or bottom-coded variables, or not-applicable values.
 
@@ -23,24 +23,28 @@ library(lmtest)
 library(car)
 library(stargazer)
 
-setwd("~/Documents/W203_Statistics/Labs/Lab_4/Lab4Repository")
+#setwd("~/Documents/W203_Statistics/Labs/Lab_4/Lab4Repository")
 CrDat = read.csv("crime_v2.csv")
-summary(CrDat)
+
 attach(CrDat)
 ```
 
-There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. These proportions are replaced with NA values below, so that the remaining row of values associated with each county are still usable for models not involving these variables.
 
+
+##  Exploratory Data Analysis
+We begin with a summary of the data.
 ```{r}
-# tail(sort(probsen))
-# CrDat[probsen > 1, 'probsen'] = NA
-# 
-# tail(sort(probconv), 11)
-# CrDat[probconv > 1, 'probconv'] = NA
+summary(CrDat)
 ```
+##Observations: 
+There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. This may be due to differences in ways the variable is reported from across the state. We will note this but would like to keep them in our analysis as they may have significant information. We also note that the maximum density is 8.8 people per square mile which indicates that we may be looking at a rural state. The crime rate proportions are low decimal values, so we will rescale it later to improve interpretation. Also, _avgsen_ has a maximum of 20 days which suggests that we have a vast majority of petty crimes. We notice a very high value of 2177.1 dollars for _wageser_ which is an extreme outlier since difference between this value and the third quartile is greater than three times the interquartile range. 
 
-## Model Building and Exploratory Data Analysis
+##Model proposal
+Our dataset has _probsen_, _probconv_, _probarr_ , _mix_  _avgsen_, _police_  variables which represent the criminal justice system. We have variables like _wage & _tax_ which are representative of economic conditions. We also have _pctmix_, _ymale_, _density_, _urban_ variables which fall under demographic factors. There are three indicator variables representing regions(west, central) and cities(urban). 
 
+Crime rate depends on the effectiveness of the criminal justice system and economic factors. Within the criminal justice system, _police_ _probconv_ is 
+
+ Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
 We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person.
 
 ```{r}
@@ -165,7 +169,7 @@ pctsen = probsen*100
 model1 = lm(scaledcrime ~ pctsen + pctconv + density)
 AIC1 = AIC(model1)
 plot(model1)
-
+summary(model1)
 vif(model1)
 
 # hist(model3$residuals, breaks = 50)
@@ -180,6 +184,7 @@ model2 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv + density + pctmin)
 AIC2 = AIC(model2)
 plot(model2)
 vif(model2)
+summary(model2)
 ```
 
 #### Model 3
@@ -191,10 +196,65 @@ model3 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv + density + pctmin +
 AIC3 = AIC(model3)
 plot(model3)
 vif(model3)
+summary(model3)
 ```
 
 
 
+```{r}
+# Adjust standard errors
+cov1 = vcovHC(model1)
+robust_se1 = sqrt(diag(cov1))
+cov2 = vcovHC(model2)
+robust_se2 = sqrt(diag(cov2))
+cov3 = vcovHC(model3)
+robust_se3 = sqrt(diag(cov3))
+
+# Adjust F statistic 
+wald_results <- waldtest(model1, vcov = cov1)
+
+stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
+          se        = list(robust_se1, robust_se2, robust_se3),
+          omit.stat = "f",
+          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
+                             round(AIC3, 2))))
+```
+```{r}
+model_x = lm(scaledcrime ~ pctsen + density + pctconv)
+AIC1 = AIC(model_x)
+plot(model_x)
+summary(model_x)
+vif(model_x)
+coeftest(model_x, vcov=vcovHC)
+```
+##First model
+```{r}
+model1 = lm(scaledcrime ~ density + pctconv)
+AIC1 = AIC(model1)
+plot(model1)
+summary(model1)
+vif(model1)
+coeftest(model1, vcov=vcovHC)
+```
+
+
+
+
+#### Model 2
+
+```{r}
+model2 = lm(scaledcrime ~ density +  pctconv + scaledpolice+ pctsen  + pctmin)
+AIC2 = AIC(model2)
+plot(model2)
+vif(model2)
+summary(model2)
+coeftest(model2, vcov=vcovHC)
+```
+
+```{r}
+AIC1
+AIC2
+```
 ```{r}
 # Adjust standard errors
 cov1 = vcovHC(model1)
