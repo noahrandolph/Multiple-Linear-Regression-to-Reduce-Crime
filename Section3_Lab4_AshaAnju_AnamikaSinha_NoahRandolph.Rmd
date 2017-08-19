@@ -35,63 +35,87 @@ attach(CrDat)
 We begin with a summary of the data.
 ```{r}
 summary(CrDat)
+nrow(CrDat)
+ncol(CrDat)
 ```
 ##Observations: 
-There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. This may be due to differences in ways the variable is reported from across the state. We will note this but would like to keep them in our analysis as they may have significant information. We also note that the maximum density is 8.8 people per square mile which indicates that we may be looking at a rural state. The crime rate proportions are low decimal values, so we will rescale it later to improve interpretation. Also, _avgsen_ has a maximum of 20 days which suggests that we have a vast majority of petty crimes. We notice a very high value of 2177.1 dollars for _wageser_ which is an extreme outlier since difference between this value and the third quartile is greater than three times the interquartile range. 
+There are 90 observations across 25 variables. There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. This may be due to differences in ways the variable is reported from across the state. We will note this but would like to keep them in our analysis as they may have significant information. We also note that the maximum density is 8.8 people per square mile which indicates that we may be looking at a rural state. The crime rate proportions are low decimal values, so we will rescale it later to improve interpretation. Also, _avgsen_ has a maximum of 20 days which suggests that we have a vast majority of petty crimes. We notice a very high value of 2177.1 dollars for _wageser_ which is an extreme outlier since difference between this value and the third quartile is greater than three times the interquartile range. 
 
 ##Model proposal
 Our dataset has _probsen_, _probconv_, _probarr_ , _mix_  _avgsen_, _police_  variables which represent the criminal justice system. We have variables like _wage & _tax_ which are representative of economic conditions. We also have _pctmix_, _ymale_, _density_, _urban_ variables which fall under demographic factors. There are three indicator variables representing regions(west, central) and cities(urban). 
 
-Crime rate depends on the effectiveness of the criminal justice system and economic factors. Within the criminal justice system, _police_ _probconv_ is 
+Crime rate depends on the effectiveness of the criminal justice system and economic factors. Criminal justice systems reduce crime through deterence. Therefore increases in police, arrests, convictions, crime sentencing, and prison sentence length should reduce crime rate. Therefore, we explore these variables.
 
- Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
-We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person.
+We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person. The common way to report crimes is per 1000 people, so we'll do that here for readability.
 
-```{r}
-hist(crime, breaks = 20, main = "County Crime Rates", xlab = "crimes committed per person")
+```{r fig.height = 3, fig.width = 4}
+scaledcrime = crime*1000
+hist(scaledcrime, breaks = 20, main = "County Crime Rates", 
+     xlab = "crimes committed per 1000 people")
 ```
 
-The histogram above shows an approximatley normal distribution with a positive skew, likely due to the fact that crime rates cannot be less than zero. No outliars are present. 
+The histogram above shows a positive skew. The distribution is continuous. No outliars are present.
 
-
-Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wages (which are spread across several variables), and the proportion of males between ages 15 and 24, _ymale_. 
-
-The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively, in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
+To further review the explanatory criminal justice variables, we check their histograms.
 
 ```{r}
-length(probarr)
+hist(police, breaks = 20, main = "Police Per Capita",
+     xlab = "police per capita")
+```
 
-hist(probarr, breaks = 16, main = "Proportion of County Crimes Resulting in Arrests",
+```{r}
+hist(probarr, breaks = 16, 
+     main = "Proportion of County Crimes Resulting in Arrests",
      xlab = "Proportion of Crimes Resulting in Arrests")
 ```
-
-The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem (CLT) can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
-
-The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
 
 ```{r}
 hist(probconv, breaks = 10, main = "Proportion Being Convicted After Arrest",
      xlab = "Proportion")
 ```
 
-
 ```{r}
-length(probsen)
-
 hist(probsen, breaks = 20, main = "Proportion Being Sentenced After Conviction",
      xlab = "Proportion")
 ```
+
+```{r}
+hist(mix, breaks = 20, main = "Ratio of Face-to-Face/All Other Crime",
+     xlab = "Ratio")
+```
+
+### Observations:
+_police_:
+
+
+ Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
+
+
+
+
+
+
+
+Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wages (which are spread across several variables), and the proportion of males between ages 15 and 24, _ymale_. 
+
+The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively, in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
+
+
+
+The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem (CLT) can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
+
+The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
+
+
+
+
+
 
 The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
 
 Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.
 
-```{r}
-length(police)
 
-hist(police, breaks = 20, main = "Police Per Capita",
-     xlab = "police per capita")
-```
 
 
 There is a large spike at 0.001 to 0.002 police per capita and short tails on either side, with a positive skew, including an outliar at 0.009 to 0.010 police per capita. We investigate that observation further below.
@@ -160,7 +184,7 @@ plot(jitter(urban), jitter(central))
 #### Model 1
 
 ```{r}
-scaledcrime = crime*1000
+
 scaledpolice = police*1000
 pctarr = probarr*100
 pctconv = probconv*100
