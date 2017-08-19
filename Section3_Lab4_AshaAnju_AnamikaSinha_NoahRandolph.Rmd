@@ -46,7 +46,7 @@ Our dataset has _probsen_, _probconv_, _probarr_ , _mix_  _avgsen_, _police_  va
 
 Crime rate depends on the effectiveness of the criminal justice system and economic factors. Criminal justice systems reduce crime through deterence. Therefore increases in police, arrests, convictions, crime sentencing, and prison sentence length should reduce crime rate. Therefore, we explore these variables.
 
-We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person. The common way to report crimes is per 1000 people, so we'll do that here for readability.
+We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person. The common way to report crimes is per 1000 people, so we'll do that here for readability. 
 
 ```{r fig.height = 3, fig.width = 4}
 scaledcrime = crime*1000
@@ -54,12 +54,11 @@ hist(scaledcrime, breaks = 20, main = "County Crime Rates",
      xlab = "crimes committed per 1000 people")
 ```
 
-The histogram above shows a positive skew. The distribution is continuous. No outliars are present.
-
-To further review the explanatory criminal justice variables, we check their histograms.
+Then we take a look at other key criminal justice variables. To make police consistent with _crime_, we scale _police_ as well.
 
 ```{r}
-hist(police, breaks = 20, main = "Police Per Capita",
+scaledpolice = police*1000
+hist(scaledpolice, breaks = 20, main = "Police Per Capita",
      xlab = "police per capita")
 ```
 
@@ -83,14 +82,69 @@ hist(probsen, breaks = 20, main = "Proportion Being Sentenced After Conviction",
 hist(mix, breaks = 20, main = "Ratio of Face-to-Face/All Other Crime",
      xlab = "Ratio")
 ```
+```{r}
+hist(tax, breaks = 20, main = "Tax Per Capita",
+     xlab = "Tax")
+```
+```{r}
+hist(density, breaks = 20, main = "Density",
+     xlab = "people per square mile")
+```
 
+```{r}
+hist(ymale, breaks = 20)
+```
+
+```{r}
+hist(pctmin, breaks = 20)
+```
 ### Observations:
-_police_:
+Response variable
+_crime_: The histogram shows a positive skew. Pesence of one outlier is noted. 
+
+Criminal justice variables
+_police_: The histogram shows a positive skew. We have one outlier which is county 115. Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.
+_probarr_: The histogram shows a slight negative skew. This variable is likely to be correlated to polic since more police will lead to more arrests and vice versa.
+_probsen_: The histogram shows a slight positive skew. Also, presence of two outliers is noted.  We see a probability value of greater than 1. Interestingly, this belongs to county 115, the same county which has the police outlier.
+_probconv_: The histogram shows a high positive skew. We see a probability value of greater than 1 for ten counties. We note an outlier  with value 2.12 in county 185. This county also has an extreme outlier in _wageser_ of $2177.06. As mentioned before, we could not find a reasonable explaination for this. So we decided to include these in our analysis.
+_mix_: The histogram shows a high positive skew. 
+_avgsen_: From the initial summary, due to the low number of maximum days, we think that this variable is unlikely to deter crime.
+
+Economic variables
+Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
+
+_tax_: Tax revenue per capita is a good indicator of the financial health of a county. The histogram shows a positive skew. Also, presence of an outlier is noted which is county 55. We did not find anything noteworthy in this county.
+
+Demographic variables
+_density_: The histogram has a strong positive skew, reflecting a few urban areas in the state. As mentioned before, the maximum density is only eight people per square mile. 
+_ymale_: This histogram also has a strong positive skew. It has an outlier in county 133. We did not find anything worth noting in this county.
+_pct\_min_: The histogram has somewhat of a uniform distribution with a decrease on the right end. 
 
 
- Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
+Indicator variables
+_urban_: We have 8 counties in this region. 
+_west_: There are 34 counties that belong to West region.
+_central_: 21 counties fall in this region. 
+
+#Correlations
+
+We examine the relationship between crime rate and potential deterrent criminal justice variables. As mentioned before, _police_ and _probarr_ are likely to be related, so we include only one out of the two. _mix_  most likely has an associative relationship to crime and will not be a deterrent. So we exclude it.
+
+```{r}
+scatterplotMatrix(~ crime + police + probconv + probsen)
+```
+
+#Observations:
+Contrary to our expectation, we see a positive relationship between _police_ and _crime_. This suggests that police may be a result of high crime rate rather than a cause of low crime rate. Therefore, it will not be a key variable of interest. Both _probsen_ and _probconv_ have the expected negative relationship with _crime_, meaning that they are potentially deterrent factors. 
 
 
+
+```{r}
+scatterplotMatrix(~ crime + density + pctmin + ymale + tax)
+```
+
+#Observations:
+We see a strong positive relationship between _density_ and _crime_ which is consistent with the common notion of high crime rate in urban areas. For lower _pctmin_ values, _crime_
 
 
 
@@ -100,40 +154,21 @@ Several variables standout as good candidates for an initial model attempting to
 
 The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively, in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
 
-
-
 The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem (CLT) can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
 
 The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
 
 
-
-
-
-
 The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
 
-Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.
 
 
 
 
-There is a large spike at 0.001 to 0.002 police per capita and short tails on either side, with a positive skew, including an outliar at 0.009 to 0.010 police per capita. We investigate that observation further below.
-
-```{r}
-CrDat[police > 0.005, ]
-```
-
-Noting that it is the same county which had values greater than 1 for _probsen_ and _probconv_ (which are now coded _NA_), the rest of county data does not indicate anything to be invalid. We note that the average sentence length of this county is maximum of all the counties, as seen in the initial summary, and the percent minority is the lowest of all the counties.
 
 The variable describing people per square mile, _density_, is a more detailed indicator of urban versus non-urban environments than the boolean varianble, _urban_. Density should also influence crime rate, either positively or negatively, since 'haves' and 'havenots' become closer together at higher densities, yet higher density areas also result in more witnesses to deter face-to-face crime.
 
-```{r}
-length(density)
 
-hist(density, breaks = 20, main = "Density",
-     xlab = "people per square mile")
-```
 
 Density's distribution has a strong positive skew, due to the zero bound. Despite the skew, the CLT can still be relied upon for population inferences, as the number of observations, 90, is sufficient.
 
@@ -150,18 +185,11 @@ hist(avgwage, breaks = 20, main = "Average Wage", xlab = "Wage")
 
 Average wage also has an approximately normal distribution, with a positive skew. 
 
-```{r}
-hist(tax, breaks = 20)
-```
 
 
-```{r}
-hist(ymale, breaks = 20)
-```
 
-```{r}
-hist(pctmin, breaks = 20)
-```
+
+
 
 ```{r}
 scatterplotMatrix(~ log(ymale) + log(police) + pctmin +
@@ -181,30 +209,23 @@ plot(jitter(urban), jitter(west))
 plot(jitter(urban), jitter(central))
 ```
 
+
 #### Model 1
 
 ```{r}
 
-scaledpolice = police*1000
-pctarr = probarr*100
-pctconv = probconv*100
-pctsen = probsen*100
-
-model1 = lm(scaledcrime ~ pctsen + pctconv + density)
+model1 = lm(log(scaledcrime) ~ probconv + probsen + log(density) )
 AIC1 = AIC(model1)
 plot(model1)
 summary(model1)
 vif(model1)
 
-# hist(model3$residuals, breaks = 50)
-# shapiro.test(model3$residuals)
-# bptest(model3)
 ```
 
 #### Model 2
 
 ```{r}
-model2 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv + density + pctmin)
+model2 = lm(log(scaledcrime) ~ probconv + probsen + log(density) + scaledpolice + pctmin)
 AIC2 = AIC(model2)
 plot(model2)
 vif(model2)
@@ -214,8 +235,8 @@ summary(model2)
 #### Model 3
 
 ```{r}
-model3 = lm(scaledcrime ~ scaledpolice + pctsen + pctconv + density + pctmin +
-                    pctarr + ymale + avgsen +  mix + avgwage + central + west +
+model3 = lm(log(scaledcrime) ~ probconv + probsen +  log(density) + scaledpolice + pctmin +
+                    probarr + ymale + avgsen +  mix  + central + west +
                     tax)
 AIC3 = AIC(model3)
 plot(model3)
@@ -234,46 +255,23 @@ robust_se2 = sqrt(diag(cov2))
 cov3 = vcovHC(model3)
 robust_se3 = sqrt(diag(cov3))
 
-# Adjust F statistic 
+# Adjust F statistic
 wald_results <- waldtest(model1, vcov = cov1)
 
 stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
           se        = list(robust_se1, robust_se2, robust_se3),
           omit.stat = "f",
-          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
+          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2),
                              round(AIC3, 2))))
 ```
-```{r}
-model_x = lm(scaledcrime ~ pctsen + density + pctconv)
-AIC1 = AIC(model_x)
-plot(model_x)
-summary(model_x)
-vif(model_x)
-coeftest(model_x, vcov=vcovHC)
-```
-##First model
-```{r}
-model1 = lm(scaledcrime ~ density + pctconv)
-AIC1 = AIC(model1)
-plot(model1)
-summary(model1)
-vif(model1)
-coeftest(model1, vcov=vcovHC)
-```
 
 
 
 
-#### Model 2
 
-```{r}
-model2 = lm(scaledcrime ~ density +  pctconv + scaledpolice+ pctsen  + pctmin)
-AIC2 = AIC(model2)
-plot(model2)
-vif(model2)
-summary(model2)
-coeftest(model2, vcov=vcovHC)
-```
+
+
+
 
 ```{r}
 AIC1
@@ -288,13 +286,62 @@ robust_se2 = sqrt(diag(cov2))
 cov3 = vcovHC(model3)
 robust_se3 = sqrt(diag(cov3))
 
-# Adjust F statistic 
+# Adjust F statistic
 wald_results <- waldtest(model1, vcov = cov1)
 
 stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
           se        = list(robust_se1, robust_se2, robust_se3),
           omit.stat = "f",
-          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
+          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2),
                              round(AIC3, 2))))
 ```
 
+
+##Model 1 alternate
+```{r}
+model1_a = lm(log(scaledcrime) ~ pctconv + log(density) + pctsen)
+(AIC1 = AIC(model1_a))
+plot(model1_a)
+summary(model1_a)
+vif(model1_a)
+
+```
+#Model2 alt
+
+```{r}
+model2_a = lm(log(scaledcrime) ~ pctconv + log(density) + scaledpolice+ pctsen  + pctmin)
+AIC2 = AIC(model2_a)
+plot(model2_a)
+summary(model2_a)
+vif(model2_a)
+
+```
+
+#Model 3 alt
+```{r}
+model3_a = lm(log(scaledcrime) ~ pctconv + log(density) + scaledpolice+ pctsen  + pctmin +pctarr + ymale + avgsen +  mix + avgwage + central + west +tax)
+AIC3 = AIC(model3_a)
+plot(model3_a)
+summary(model3_a)
+vif(model3_a)
+
+```
+
+```{r}
+# Adjust standard errors
+cov1 = vcovHC(model1_a)
+robust_se1 = sqrt(diag(cov1))
+cov2 = vcovHC(model2_a)
+robust_se2 = sqrt(diag(cov2))
+cov3 = vcovHC(model3_a)
+robust_se3 = sqrt(diag(cov3))
+
+# Adjust F statistic 
+wald_results <- waldtest(model1_a, vcov = cov1)
+
+stargazer(model1_a, model2_a, model3_a, type = 'text', intercept.bottom = FALSE,
+          se        = list(robust_se1, robust_se2, robust_se3),
+          omit.stat = "f",
+          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
+                             round(AIC3, 2))))
+```
