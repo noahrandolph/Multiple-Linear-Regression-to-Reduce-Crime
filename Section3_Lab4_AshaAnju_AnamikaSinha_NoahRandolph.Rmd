@@ -42,9 +42,9 @@ ncol(CrDat)
 There are 90 observations across 25 variables. There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. This may be due to differences in ways the variable is reported from across the state. We will note this but would like to keep them in our analysis as they may have significant information. We also note that the maximum density is 8.8 people per square mile which indicates that we may be looking at a rural state. The crime rate proportions are low decimal values, so we will rescale it later to improve interpretation. Also, _avgsen_ has a maximum of 20 days which suggests that we have a vast majority of petty crimes. We notice a very high value of 2177.1 dollars for _wageser_ which is an extreme outlier since difference between this value and the third quartile is greater than three times the interquartile range. 
 
 ##Model proposal
-Our dataset has _probsen_, _probconv_, _probarr_ , _mix_  _avgsen_, _police_  variables which represent the criminal justice system. We have variables like _wage & _tax_ which are representative of economic conditions. We also have _pctmix_, _ymale_, _density_, _urban_ variables which fall under demographic factors. There are three indicator variables representing regions(west, central) and cities(urban). 
+Our dataset has _probsen_, _probconv_, _probarr_ , _mix_ , _avgsen_, _police_  variables which represent the criminal justice system. We have variables like _wage_ & _tax_ which are representative of economic conditions. We also have _pctmin_, _ymale_, _density_, _urban_ variables which fall under demographic factors. There are three indicator variables representing regions(west, central) and cities(urban). 
 
-Crime rate depends on the effectiveness of the criminal justice system and economic factors. Criminal justice systems reduce crime through deterence. Therefore increases in police, arrests, convictions, crime sentencing, and prison sentence length should reduce crime rate. Therefore, we explore these variables.
+Crime rate depends on the effectiveness of the criminal justice system and economic factors. Criminal justice systems reduce crime through deterrence. Therefore increases in police, arrests, convictions, crime sentencing, and prison sentence length should reduce crime rate. Therefore, we explore these variables.
 
 We first look at the response variable, _crime_, representing the number of each counties' crimes committed per person. The common way to report crimes is per 1000 people, so we'll do that here for readability. 
 
@@ -56,88 +56,70 @@ hist(scaledcrime, breaks = 20, main = "County Crime Rates",
 
 Then we take a look at other key criminal justice variables. To make police consistent with _crime_, we scale _police_ as well.
 
-```{r fig.height = 4, fig.width = 4}
+```{r fig.height=16, fig.width=12}
 scaledpolice = police*1000
+par(mfrow=c(5,2))
 hist(scaledpolice, breaks = 20, main = "Police Per Capita",
-     xlab = "police per capita")
-```
-
-```{r fig.height = 4, fig.width = 4}
+     xlab = "police per capita", cex.main = 1.5)
 hist(probarr, breaks = 16, 
      main = "Proportion of County Crimes Resulting in Arrests",
-     xlab = "Proportion of Crimes Resulting in Arrests")
-```
-
-```{r fig.height = 4, fig.width = 4}
+     xlab = "Proportion of Crimes Resulting in Arrests", cex.main = 1.5)
 hist(probconv, breaks = 10, main = "Proportion Being Convicted After Arrest",
-     xlab = "Proportion")
-```
-
-```{r fig.height = 4, fig.width = 4}
+     xlab = "Proportion", cex.main = 1.5)
 hist(probsen, breaks = 20, main = "Proportion Being Sentenced After Conviction",
-     xlab = "Proportion")
-```
-
-```{r fig.height = 4, fig.width = 4}
+     xlab = "Proportion", cex.main = 1.5)
 hist(mix, breaks = 20, main = "Ratio of Face-to-Face/All Other Crime",
-     xlab = "Ratio")
-```
-```{r fig.height = 4, fig.width = 4}
+     xlab = "Ratio", cex.main = 1.5)
 hist(tax, breaks = 20, main = "Tax Per Capita",
-     xlab = "Tax")
-```
-```{r fig.height = 4, fig.width = 4}
+     xlab = "Tax", cex.main = 1.5)
 hist(density, breaks = 20, main = "Density",
-     xlab = "people per square mile")
+     xlab = "people per square mile", cex.main = 1.5)
+hist(ymale, breaks = 20, main = "Propotion of County Males Between 15 And 24 years.",
+     xlab = "Proportion", cex.main = 1.5)
+hist(pctmin, breaks = 20, main = "Proportion Of Minority Or Nonwhite",
+     xlab = "Proportion", cex.main = 1.5)
 ```
 
-```{r}
-hist(ymale, breaks = 20)
-```
 
-```{r}
-hist(pctmin, breaks = 20)
-```
 
 ### Observations:
-Response variable 
+Response variable$\\$ 
 _crime_: The histogram shows a positive skew. Presence of one outlier is noted. Because of the positive skew, we will do a log transformation of this variable.  
 *Criminal justice variables*  
-_police_: The histogram shows a positive skew. We have one outlier which is county 115. Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.  consider a log transformation of this variable. 
-_probarr_: The histogram shows a slight negative skew. This variable is likely to be correlated to polic since more police will lead to more arrests and vice versa. 
-_probsen_: The histogram shows a slight positive skew. Also, presence of two outliers is noted.  We see a probability value of greater than 1. Interestingly, this belongs to county 115, the same county which has the police outlier. 
-_probconv_: The histogram shows a high positive skew. We see a probability value of greater than 1 for ten counties. We note an outlier  with value 2.12 in county 185. This county also has an extreme outlier in _wageser_ of $2177.06. As mentioned before, we could not find a reasonable explaination for this. So we decided to include these in our analysis. 
-_mix_: The histogram shows a high positive skew. 
-_avgsen_: From the initial summary, due to the low number of maximum days, we think that this variable is unlikely to deter crime. 
+_police_: The histogram shows a positive skew. We have one outlier which is county 115. Police per capita, _police_, should have negative influence on county crime rates, since their presence is generally thought of as a deterence.  consider a log transformation of this variable. $\\$
+_probarr_: The histogram shows a slight negative skew. This variable is likely to be correlated to police since more police will lead to more arrests and vice versa. $\\$
+_probsen_: The histogram shows a slight positive skew. Also, presence of two outliers is noted.  We see a probability value of greater than 1. Interestingly, this belongs to county 115, the same county which has the police outlier. $\\$
+_probconv_: The histogram shows a high positive skew. We see a probability value of greater than 1 for ten counties. We note an outlier  with value 2.12 in county 185. This county also has an extreme outlier in _wageser_ of \$2177.06. As mentioned before, we could not find a reasonable explaination for this. So we decided to include these in our analysis. $\\$
+_mix_: The histogram shows a high positive skew. $\\$
+_avgsen_: From the initial summary, due to the low number of maximum days, we think that this variable is unlikely to deter crime. $\\$
 
-Economic variables 
+Economic variables$\\$
 Wage would be a good economic indicator but in our dataset, wage is broken up into eight different variables based on sector. In the absence of sector weights, it is difficult to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also the wage range in each county to understand wage effect on crime.
 
 _tax_: Tax revenue per capita is a good indicator of the financial health of a county. The histogram shows a positive skew. Also, presence of an outlier is noted which is county 55. We did not find anything noteworthy in this county.
 
-Demographic variables
-_density_: The histogram has a strong positive skew, reflecting a few urban areas in the state. As mentioned before, the maximum density is only eight people per square mile. 
-_ymale_: This histogram also has a strong positive skew. It has an outlier in county 133. We did not find anything worth noting in this county.
+Demographic variables$\\$
+_density_: The histogram has a strong positive skew, reflecting a few urban areas in the state. As mentioned before, the maximum density is only eight people per square mile. $\\$
+_ymale_: This histogram also has a strong positive skew. It has an outlier in county 133. We did not find anything worth noting in this county.$\\$
 _pct\_min_: The histogram has somewhat of a uniform distribution with a decrease on the right end. 
 
 
-Indicator variables
-_urban_: We have 8 counties in this region. 
-_west_: There are 34 counties that belong to West region.
+Indicator variables$\\$
+_urban_: We have 8 counties in this region. $\\$
+_west_: There are 34 counties that belong to West region.$\\$
 _central_: 21 counties fall in this region. 
 
 
 Following the first stage of data analysis we perform a log transformation of crime and density and plot histograms.
 
-```{r}
+```{r fig.width=12}
+par(mfrow=c(1,2))
 hist(log(scaledcrime), main="Log of Crime", xlab=NULL, breaks=20)
-```
-```{r}
 hist(log(density), main="Log of Density", xlab=NULL, breaks=20)
 ```
 
 #Observations:
-_log(scaledcrime)_: The log transformation has made the distribution quite normal. This will help ensure that the errors of the model are normal (i.e. CLM assumption 6).
+_log(scaledcrime)_: The log transformation has made the distribution quite normal. This will help ensure that the errors of the model are normal (i.e. CLM assumption 6).$\\$
 _log(density)_: The log transformation of density has helped with the normalty of the distribution  as well.
 
 #Correlations
@@ -159,7 +141,7 @@ We see a strong positive relationship between _log(density)_ and _log(scaledcrim
 
 #### Model 1
 Based on the exploratory data analysis and underlying intuition about crime relationships, our initial proposed model specification and coefficient expectations are:
-_log(density)_: since this variable shows the strongest linear relationship with _log(scaledcrime)_ and is consistent across its range, we include this as an associative variable to avoid significant omitted variable bias in our key variables of interest.
+_log(density)_: since this variable shows the strongest linear relationship with _log(scaledcrime)_ and is consistent across its range, we include this as an associative variable to avoid significant omitted variable bias in our key variables of interest.$\\$
 _probconv_ and _probsen_: our intuition that an increase in conviction and sentencing rates helps reduce crime rate is supported by the scatterplot in our EDA.
 
 ```{r}
@@ -168,13 +150,13 @@ model1 = lm(log(scaledcrime) ~ probconv + probsen + log(density))
 
 #### Testing the validity of the 6 assumptions of the CLM
 **CLM 1 - A linear model**
-The model is specified such that the dependent variable is a linear function of the explanatory variables. 
-Is the assumption valid? Yes.
+The model is specified such that the dependent variable is a linear function of the explanatory variables. $\\$
+Is the assumption valid? Yes.$\\$
 Response: No response required.
 
 **CLM 2 - Random Sampling**
-Given that we have a dataset of 90 counties from an unknown location, and we do not know how the data was collected and if the data collection was consistent among the counties, this assumption is uncertain. Additionally the structure of one observation representing each county further confounds the assumption of randomly observed variables. A true random sample would take observations at random from the unaggregated level. 
-Is the assumption valid? Not clear.
+Given that we have a dataset of 90 counties from an unknown location, and we do not know how the data was collected and if the data collection was consistent among the counties, this assumption is uncertain. Additionally the structure of one observation representing each county further confounds the assumption of randomly observed variables. A true random sample would take observations at random from the unaggregated level. $\\$
+Is the assumption valid? Not clear.$\\$
 Response: We proceed with the analysis.
 
 **CLM 3 - Multicollinearity**
@@ -187,18 +169,18 @@ cor(X)
 vif(model1)
 ```
 
-The three explanatory variables are not perfectly correlated and the VIFs are low (i.e. less than 4), so there is no perfect multicollinearity of the independent variables.
-Is the assumption valid? Yes 
+The three explanatory variables are not perfectly correlated and the VIFs are low (i.e. less than 4), so there is no perfect multicollinearity of the independent variables.$\\$
+Is the assumption valid? Yes $\\$
 Response: No response required.
 
-***CLM 4 – Zero-Conditional Mean***
+***CLM 4 - Zero-Conditional Mean***
 To analyze whether there is a zero-conditional mean of the residuals across the explanatory variables in model 1, we plot the residuals against the fitted values with the predicted conditional mean spline line across fitted values.
 ```{r}
 plot(model1, which=1)
 ```
 
-The plot indicates little evidence that the zero-conditional mean assumption doesn’t hold. The red spline line on the residuals versus fitted values plot is fairly flat, with slight trends away from zero toward the edges. Given that there are few data points at the edges, the slight trends are not a concern.
-Is the assumption valid? Yes
+The plot indicates little evidence that the zero-conditional mean assumption doesn\'t hold. The red spline line on the residuals versus fitted values plot is fairly flat, with slight trends away from zero toward the edges. Given that there are few data points at the edges, the slight trends are not a concern.$\\$
+Is the assumption valid? Yes$\\$
 Response: No response required
 
 **CLM 5 - Homoscedasticity**
@@ -209,12 +191,12 @@ plot(model1, which = 3)
 bptest(model1)
 ```
 
-The scale-location plot shows considerable evidence of heteroskedasticity, as seen by the considerable red spline line curvature. Also the Breusch-Pagan shows a rejection of the null hyposthesis of homoskedasticity, with a p-value less than \alpha = 0.01.
+The scale-location plot shows considerable evidence of heteroskedasticity, as seen by the considerable red spline line curvature. Also the Breusch-Pagan shows a rejection of the null hyposthesis of homoskedasticity, with a p-value less than $\alpha$ = 0.01.
 
-Is the assumption valid? No.
+Is the assumption valid? No.$\\$
 Response: use robust standard errors.
 
-**CLM 6 – Normality of residuals**
+**CLM 6 - Normality of residuals**
 To determine whether there is normality of the residuals we use a Q-Q plot of the residuals and simply visually observe whether there is normality.
 
 ```{r}
@@ -223,7 +205,7 @@ plot(model1, which = 2)
 
 The Q-Q plot shows deviation from normality on both the negative end and, considerably more, at the positive end. 
 
-Is the assumption valid? No.
+Is the assumption valid? No.$\\$
 Response: Despite the distribution of model 1 residuals showing non-normality, since we have a large sample size of 90, we can rely on the central limit theorem to satisfy this assumption.
 
 #### Model 2
