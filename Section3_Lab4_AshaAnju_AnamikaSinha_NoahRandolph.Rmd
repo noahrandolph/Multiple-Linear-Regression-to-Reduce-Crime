@@ -126,12 +126,29 @@ _urban_: We have 8 counties in this region.
 _west_: There are 34 counties that belong to West region.
 _central_: 21 counties fall in this region. 
 
+
+Following the first stage of data analysis we perform a log transformation of crime and density and plot histograms
+
+```{r}
+hist(log(crime), main="Log of Crime", xlab=NULL, breaks=100)
+```
+```{r}
+hist(log(density), main="Log of Density", xlab=NULL, breaks=100)
+```
+
+#Observations:
+log(crime): The log transformation has made the distribution of log(crime) quite normal. This will help
+to ensure that the errors of the model are normal (i.e. CLM 6)
+
+log(density): The log transformation of density has helped with the normalty of the distribution  as well.
+
 #Correlations
 
 We examine the relationship between crime rate and potential deterrent criminal justice variables. As mentioned before, _police_ and _probarr_ are likely to be related, so we include only one out of the two. _mix_  most likely has an associative relationship to crime and will not be a deterrent. So we exclude it.
 
 ```{r}
 scatterplotMatrix(~ crime + police + probconv + probsen)
+scatterplotMatrix(~ log(crime) + log(police) + probconv + probsen)
 ```
 
 #Observations:
@@ -141,12 +158,22 @@ Contrary to our expectation, we see a positive relationship between _police_ and
 
 ```{r}
 scatterplotMatrix(~ crime + density + pctmin + ymale + tax)
+scatterplotMatrix(~ log(crime) + log(density) + pctmin + ymale + tax)
 ```
 
 #Observations:
 We see a strong positive relationship between _density_ and _crime_ which is consistent with the common notion of high crime rate in urban areas. For lower _pctmin_ values, _crime_
 
 
+
+
+Based on the exploratory data analysis and underlying intuition about viewing behavior an initial proposed
+model specification and coefficient expectations are:
+log(density):since _density_ variable ranges between 0 to 8 people per square mile..
+probconv:
+probsen: 
+
+Model:
 
 
 
@@ -166,6 +193,7 @@ The prison sentence length distribution, above, is approximately normal with a p
 
 
 
+
 The variable describing people per square mile, _density_, is a more detailed indicator of urban versus non-urban environments than the boolean varianble, _urban_. Density should also influence crime rate, either positively or negatively, since 'haves' and 'havenots' become closer together at higher densities, yet higher density areas also result in more witnesses to deter face-to-face crime.
 
 
@@ -173,6 +201,7 @@ The variable describing people per square mile, _density_, is a more detailed in
 Density's distribution has a strong positive skew, due to the zero bound. Despite the skew, the CLT can still be relied upon for population inferences, as the number of observations, 90, is sufficient.
 
 Average wages, _avgwage_ is a variable created below by concatenating each wage variable in the dataset together. In this way, average wages for each county can be modeled against crime.
+
 
 ```{r}
 avgwage = (wagecon + wagetuc + wagetrd + wagefir +
@@ -182,7 +211,6 @@ avgwage = (wagecon + wagetuc + wagetrd + wagefir +
 length(avgwage)
 hist(avgwage, breaks = 20, main = "Average Wage", xlab = "Wage")
 ```
-
 Average wage also has an approximately normal distribution, with a positive skew. 
 
 
@@ -191,23 +219,13 @@ Average wage also has an approximately normal distribution, with a positive skew
 
 
 
-```{r}
-scatterplotMatrix(~ log(ymale) + log(police) + pctmin +
-                          density)
-```
 
-```{r}
-scatterplotMatrix(~ log(police) + probarr + probconv +
-                          probsen)
-```
 
-```{r}
-plot(jitter(urban), jitter(west))
-```
 
-```{r}
-plot(jitter(urban), jitter(central))
-```
+
+
+
+
 
 
 #### Model 1
@@ -273,75 +291,8 @@ stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
 
 
 
-```{r}
-AIC1
-AIC2
-```
-```{r}
-# Adjust standard errors
-cov1 = vcovHC(model1)
-robust_se1 = sqrt(diag(cov1))
-cov2 = vcovHC(model2)
-robust_se2 = sqrt(diag(cov2))
-cov3 = vcovHC(model3)
-robust_se3 = sqrt(diag(cov3))
-
-# Adjust F statistic
-wald_results <- waldtest(model1, vcov = cov1)
-
-stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
-          se        = list(robust_se1, robust_se2, robust_se3),
-          omit.stat = "f",
-          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2),
-                             round(AIC3, 2))))
-```
 
 
-##Model 1 alternate
-```{r}
-model1_a = lm(log(scaledcrime) ~ pctconv + log(density) + pctsen)
-(AIC1 = AIC(model1_a))
-plot(model1_a)
-summary(model1_a)
-vif(model1_a)
 
-```
-#Model2 alt
 
-```{r}
-model2_a = lm(log(scaledcrime) ~ pctconv + log(density) + scaledpolice+ pctsen  + pctmin)
-AIC2 = AIC(model2_a)
-plot(model2_a)
-summary(model2_a)
-vif(model2_a)
 
-```
-
-#Model 3 alt
-```{r}
-model3_a = lm(log(scaledcrime) ~ pctconv + log(density) + scaledpolice+ pctsen  + pctmin +pctarr + ymale + avgsen +  mix + avgwage + central + west +tax)
-AIC3 = AIC(model3_a)
-plot(model3_a)
-summary(model3_a)
-vif(model3_a)
-
-```
-
-```{r}
-# Adjust standard errors
-cov1 = vcovHC(model1_a)
-robust_se1 = sqrt(diag(cov1))
-cov2 = vcovHC(model2_a)
-robust_se2 = sqrt(diag(cov2))
-cov3 = vcovHC(model3_a)
-robust_se3 = sqrt(diag(cov3))
-
-# Adjust F statistic 
-wald_results <- waldtest(model1_a, vcov = cov1)
-
-stargazer(model1_a, model2_a, model3_a, type = 'text', intercept.bottom = FALSE,
-          se        = list(robust_se1, robust_se2, robust_se3),
-          omit.stat = "f",
-          add.lines = list(c("AIC", round(AIC1, 2), round(AIC2, 2), 
-                             round(AIC3, 2))))
-```
