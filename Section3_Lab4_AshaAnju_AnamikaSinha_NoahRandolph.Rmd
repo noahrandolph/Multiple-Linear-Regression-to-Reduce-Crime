@@ -43,10 +43,10 @@ summary(CrDat)
 nrow(CrDat)
 ncol(CrDat)
 ```
-##Observations: 
+#### Observations: 
 There are 90 observations across 25 variables. There are no missing values and the data in each variable make sense given the variable types, except for values in _probsen_ and _probconv_, which both show proportions that are greater than 1. This may be due to differences in ways the variable is reported from across the state. We will note this but would like to keep them in our analysis as they may have significant information. We also note that the maximum density is 8.8 people per square mile which indicates that we may be looking at a rural state. The crime rate proportions are low decimal values, so we will rescale it later to improve interpretation. Also, _avgsen_ has a maximum of 20 days which suggests that we have a vast majority of petty crimes. We notice a very high value of 2177.1 dollars for _wageser_ which is an extreme outlier since difference between this value and the third quartile is greater than three times the interquartile range. 
 
-##Model proposal
+## Model proposal
 Our dataset has _probsen_, _probconv_, _probarr_ , _mix_ , _avgsen_, _police_  variables which represent the criminal justice system. We have variables like _wage_ & _tax_ which are representative of economic conditions. We also have _pctmin_, _ymale_, _density_, _urban_ variables which fall under demographic factors. There are three indicator variables representing regions(west, central) and cities(urban). 
 
 Crime rate depends on the effectiveness of the criminal justice system and economic factors. Criminal justice systems reduce crime through deterrence. Therefore increases in police, arrests, convictions, crime sentencing, and prison sentence length should reduce crime rate. Therefore, we explore these variables.
@@ -87,7 +87,7 @@ hist(pctmin, breaks = 20, main = "Proportion Of Minority Or Nonwhite",
 
 
 
-### Observations:
+#### Observations:
 Response variable$\\$ 
 _crime_: The histogram shows a positive skew. Presence of one outlier is noted. Because of the positive skew, we will do a log transformation of this variable.  
 *Criminal justice variables*  
@@ -123,28 +123,28 @@ hist(log(scaledcrime), main="Log of Crime", xlab=NULL, breaks=20)
 hist(log(density), main="Log of Density", xlab=NULL, breaks=20)
 ```
 
-#Observations:
+#### Observations:
 _log(scaledcrime)_: The log transformation has made the distribution quite normal. This will help ensure that the errors of the model are normal (i.e. CLM assumption 6).$\\$
 _log(density)_: The log transformation of density has helped with the normalty of the distribution  as well.
 
-#Correlations
+### Correlations
 We examine the relationship between crime rate and potentially deterrent criminal justice variables. As mentioned before, _police_ and _probarr_ are likely to be highly correlated, since police are the ones making arrests, so we include only one out of the two. _mix_ most likely has an associative relationship to crime and will not be a deterrent, so we exclude it.
 
 ```{r}
 scatterplotMatrix(~ log(scaledcrime) + log(scaledpolice) + probconv + probsen)
 ```
 
-#Observations:
+#### Observations:
 Contrary to our expectation, we see a positive relationship between _log(scaledpolice)_ and _log(scaledcrime)_. This suggests that police may be the result of high crime rate rather than a cause of low crime rate. Therefore, it will not be a key variable of interest. Both _probsen_ and _probconv_ have the expected negative relationship with crime rate, meaning that they are potentially deterrent factors. 
 
 ```{r}
 scatterplotMatrix(~ log(scaledcrime) + log(density) + pctmin + log(ymale) + log(tax))
 ```
 
-##Observations:
+#### Observations:
 We see a strong positive relationship between _log(density)_ and _log(scaledcrime)_, which is consistent with the common notion of high crime rate in urban areas. The association between _pctmin_ and _log(scaledcrime)_ is less clear, with an initial rise, then a reduction as _pctmin_ increases on the x-axis. Even after the log transformation, _log(ymale)_ still has a high positive skew and therefore too much clustering to make sense of the relationship with crime rate. The same is true for _log(tax)_. Furthermore, we expected to see a negative relationship with tax revenue per capita as a proxy for income levels. Since it's positive, we rule out tax as a key variable of interest as it relates to reducing crime rates.
 
-#### Model 1
+### Model 1
 Based on the exploratory data analysis and underlying intuition about crime relationships, our initial proposed model specification and coefficient expectations are:
 _log(density)_: since this variable shows the strongest linear relationship with _log(scaledcrime)_ and is consistent across its range, we include this as an associative variable to avoid significant omitted variable bias in our key variables of interest.$\\$
 _probconv_ : our intuition that an increase in conviction helps reduce crime rate is supported by the scatterplot in our EDA. While _probsen_ showed a negative relationship with _crime_ in the scatterplot analysis, it is likely to be key deterrent as the maximum average length of sentencing is so low (20 days). 
@@ -218,7 +218,7 @@ coeftest(model1, vcov = vcovHC)
 ```
 The results shows that a 1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 37% $((e^{-0.466}-1)*100)$. For every 1% increase in density, the crime per 100 people go up by approximatley 0.44%. 
 
-#### Model 2
+### Model 2
 Building on our initial model, we include variables that are associative but less likely to introduce bias. 
 _probsen_: An increase in sentencing rates is associated wth a reduction in crime rate as seen from the scatterplot in our EDA.
 _pctmin_:In real world, poverty, minority population and crime rates are interlinked. We include _pctmin_ in our model in lieu of an economic indicator for low income communites.
@@ -256,7 +256,7 @@ coeftest(model2, vcov = vcovHC)
 The results shows that a 1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 42% $((e^{-0.55}-1)*100)$. For every 1% increase in density, the crime per 100 people go up by approximatley 0.39%. A 1 unit increase in proportion of sentencing is associated with a decrease in crime per 1000 people of 69.2%. Finally a 1 percentage point increase in percentage of minorities is associated with a increase in crime per 1000 people of 1.2%. 
 
 
-#### Model 3
+### Model 3
 In this model, we include the remaining variables excluding _police_ and the 9 wage variables. As previously mentioned, we believe police per capita is an outcome of the crime rate since they are positively related. We are unable to create a meaningful wage variable without employment information to combine the sector wage variables into a weighted average. 
 
 ```{r}
