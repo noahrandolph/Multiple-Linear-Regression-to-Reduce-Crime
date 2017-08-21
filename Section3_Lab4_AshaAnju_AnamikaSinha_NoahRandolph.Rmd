@@ -1,7 +1,7 @@
 ---
 title: "Lab 4: Reducing Crime"
 author: "Asha Anju, Anamika Sinha, Noah Randolph"
-date: "8/14/2017"
+date: "8/20/2017"
 output: pdf_document
 ---
 
@@ -25,8 +25,6 @@ library(lmtest)
 library(car)
 library(stargazer)
 library(MASS)
-
-#setwd("~/Documents/W203_Statistics/Labs/Lab_4/Lab4Repository")
 CrDat = read.csv("crime_v2.csv")
 attach(CrDat)
 ```
@@ -85,7 +83,7 @@ _Economic variables_$\\$
 Wage would be a good economic indicator, but in our dataset wage is broken up into eight different variables based on sector. In the absence of sector weights, it is impossible to create a meaningful average variable. We tried various ways to interpret the given information by taking an average of all the wage variables and also by taking the wage range in each county to understand wage effect on crime. However, we cannot conclude that these are meaningful variables for our analysis. We look at the other economic variable, _tax_, below.
 
 ```{r}
-hist(tax, breaks = 20, main = "Tax Per Capita",
+hist(tax, breaks = 20, main = "Tax Revenue Per Capita",
      xlab = "Tax", cex.main = 1.5)
 ```
 
@@ -121,7 +119,7 @@ Following the first stage of data analysis, we perform log transformations of cr
 ```{r}
 scaledcrime = crime*1000
 scaledpolice = police*1000
-hist(log(scaledcrime), main="Log of Crime", xlab=NULL, breaks=20)
+hist(log(scaledcrime), main="Log of Crime per 1000 people", xlab=NULL, breaks=20)
 hist(log(density), main="Log of Density", xlab=NULL, breaks=20)
 ```
 
@@ -149,9 +147,9 @@ We see a strong positive relationship between _log(density)_ and _log(scaledcrim
 Furthermore, we expected to see a negative relationship with **tax revenue per capita** as a proxy for income levels. Since it's positive, we rule out _tax_ as a key variable of interest as it relates to reducing crime rates.
 
 ## Model 1 Building and Assumption Testing
-Based on the exploratory data analysis and underlying intuition about crime relationships, our initial proposed model specification and coefficient expectations are:
-**_log(density)_**: since this variable shows the strongest linear relationship with _log(scaledcrime)_ and is consistent across its range, we include this as an associative variable to avoid significant omitted variable bias in our key variable of interest.$\\$
-**_probconv_**: our intuition that an increase in conviction helps reduce crime rate is supported by the scatterplot in our EDA. While _probsen_ showed a negative relationship with _crime_ in the scatterplot analysis, it is less likely to be key deterrent as the maximum average length of sentencing is so low (20 days). 
+Based on the exploratory data analysis and underlying intuition about crime relationships, our initial proposed model specification and coefficient expectations are:$\\$ 
+**_log(density)_**: since this variable shows the strongest linear relationship with _log(scaledcrime)_ and is consistent across its range, we include this as an associative variable to avoid significant omitted variable bias in our key variables of interest.$\\$
+**_probconv_**: our intuition that an increase in conviction helps reduce crime rate is supported by the scatterplot in our EDA. While _probsen_ showed a negative relationship with _crime_ in the scatterplot analysis, it is likely to be key deterrent as the maximum average length of sentencing is so low (20 days). 
 
 ```{r}
 model1 = lm(log(scaledcrime) ~ probconv + log(density))
@@ -225,8 +223,8 @@ coeftest(model1, vcov = vcovHC)
 The results shows that a 0.1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 4.5% $((e^{-0.466}-1)*100)$; _probconv_ is reported between 0 and 2.2. For every 1% increase in density, the crime per 1000 people go up by approximatley 0.44%. 
 
 ## Model 2 Building and Assumption Testing
-Building on our initial model, we include variables that are associative but less likely to introduce bias. 
-**_probsen_**: An increase in sentencing rates is associated wth a reduction in crime rate as seen from the scatterplot in our EDA.
+Building on our initial model, we include variables that are associative but less likely to introduce bias.$\\$ 
+**_probsen_**: An increase in sentencing rates is associated wth a reduction in crime rate as seen from the scatterplot in our EDA.$\\$
 **_pctmin_**:In real world, poverty, minority population and crime rates are interlinked. We include _pctmin_ in our model in lieu of an economic indicator for low income communites.
 
 ```{r}
@@ -236,13 +234,12 @@ plot(model2)
 vif(model2)
 ```
 
-
-**Noting CLM assumption differences from model 1**$\\$ 
-The Q-Q plot shows deviation from normality on both the negative end and the positive end, so we continue to rely on the Central Limit Theorem. 
+**Noting CLM assumption differences from Model 1**$\\$ 
+The Q-Q plot shows deviation from normality on both the negative end and the positive end. So we continue to rely on the Central Limit Theorem as the number of observations is 90.  
 
 The zero conditional mean assumption holds except for the left end of the plot where we have only one data point. The Scale-Location plot shows reduced evidence of heteroskedasticity. So we continue to use robust standard errors. The residual vs. leverage plot has one data point with a cook's distance above 1. The lone point is county 51, which is the only one with a probability of sentencing above 1. 
 
-The variance inflation factors for the variables are all less than 4, indicating an acceptable level of multicollinearity between them.
+The variance inflation factors for the variables are all less than 4, indicating an acceptable level of multicollinearity between them. 
 
 ```{r}
 detach(CrDat)
@@ -313,7 +310,8 @@ stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
 All independent variables are statistically significant in model 1. Three variables are statistically significant in model 2 at a significance level of 0.01. The variable _probsen_ is not statistically significant at $\alpha =  0.05$  but is significant at $\alpha = 0.1$. The variable _ymale_ is also significant at $\alpha$ = 0.05 in model 3. _ymale_ was not significant when included along with model 2. This makes us think it was biased by omitted variables like _mix_ or _probarr_.
 
 **Goodness of Fit**$\\$
-The $R^2$ values goes up as we move from model 1 to model 3 as expected with the addition of more variales. The AIC values decrease by 67% from model 1 to model 2 and by 34% from model 2 to model 3. This shows that model 2 has better accuracy and goodness of fit compared to model 1. The smaller decrease in AIC from model 2 to model 3 comes at the price of adding seven more variables. The slope coefficients of the indepedent variables did change much between model 2 and model 3 showing the robustness of model 2. Therefore **model 2 is our best linear model balancing accuracy and parsimony**.
+
+The $R^2$ values goes up as we move from Model 1 to Model 3 as expected with the addition of more variales. The AIC values decrease by 67% from Model 1 to Model 2 and by 34% from Model 2 to Model 3. This shows that Model 2 has better accuracy and goodness of fit compared to Model 1. The smaller decrease in AIC from Model 2 to Model 3 comes at the price of adding seven more variables. The slope coefficients of the indepedent variables did not change much between Model 2 and Model 3 showing the robustness of Model 2. Therefore **Model 2 is our best linear model balancing accuracy and parsimony**.
 
 **Coefficient Interpretations and Practical Significance of Model 2**$\\$
 The results shows that a 0.1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 5.3% $((e^{-0.055}-1)*100)$ ( _probconv_ is reported between 0 and 2.2). This is a substantial decrease in crime rate. $\\$
