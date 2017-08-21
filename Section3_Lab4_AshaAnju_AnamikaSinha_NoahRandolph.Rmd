@@ -216,7 +216,9 @@ Response: Despite the distribution of model 1 residuals showing non-normality, s
 ```{r}
 coeftest(model1, vcov = vcovHC)
 ```
-The results shows that a 1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 37% $((e^{-0.466}-1)*100)$. For every 1% increase in density, the crime per 100 people go up by approximatley 0.44%. 
+
+**Coefficient Interpretations**
+The results shows that a 0.1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 4.5% $((e^{-0.466}-1)*100)$; _probconv_ is reported between 0 and 2.2. For every 1% increase in density, the crime per 1000 people go up by approximatley 0.44%. 
 
 #### Model 2
 Building on our initial model, we include variables that are associative but less likely to introduce bias. 
@@ -253,7 +255,8 @@ When we ran the model after removing this data point, zero conditional mean and 
 ```{r}
 coeftest(model2, vcov = vcovHC)
 ```
-The results shows that a 1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 42% $((e^{-0.55}-1)*100)$. For every 1% increase in density, the crime per 100 people go up by approximatley 0.39%. A 1 unit increase in proportion of sentencing is associated with a decrease in crime per 1000 people of 69.2%. Finally a 1 percentage point increase in percentage of minorities is associated with a increase in crime per 1000 people of 1.2%. 
+
+
 
 
 #### Model 3
@@ -281,6 +284,8 @@ coeftest(model3, vcov = vcovHC)
 
 ## Comparison of Models
 
+The results of the three models are reported in the table below.
+
 ```{r}
 # Compute Akaike information criterion (AIC)
 AIC1 = AIC(model1)
@@ -305,63 +310,44 @@ stargazer(model1, model2, model3, type = 'text', intercept.bottom = FALSE,
                              round(AIC3, 2))))
 ```
 
-**Statistical Significance**: The intercept and coefficients for _probconv_, _log(density)_ and _pctmin_ are statistically significant at a significance level of 0.01. _probsen_ is statistically significant at a signifcance level of 0.1.
+### Model Results
 
-**Practical Significance**
+The $R^2$ values goes up as we move from Model 1 to Model 3 as expected with the addition of more variales. The AIC values decrease by 67% from Model 1 to Model 2 and by 34% from Model 2 to Model 3. This shows that Model 2 has better accuracy and goodness of fit compared to Model 1. The smaller decrease in AIC from Model 2 to Model 3 comes at the price of adding seven more variables. The slope coefficients of the indepedent variables did change much between Model 2 and Model 3 showing the robustness of Model 2. Therefore Model 2 is our best linear model balancing accuracy and parsimony.
 
-******************************
-Several variables standout as good candidates for an initial model attempting to understand the determinants of crime. These include the proportion of crimes resulting in arrests, _probarr_, the average prison sentence length, _avgsen_, police per capita, _police_, people per square mile, _density_, average wages (which are spread across several variables), and the proportion of males between ages 15 and 24, _ymale_. 
+**Statistical Significance**
+All independent variables are statistically significant in Model 1. Three variables are statistically significant in Model 2 at a significance level of 0.01. The variable _probsen_ is not statistically significant at $\alpha =  0.05$  but is significant at $\alpha = 0.1$. The variable _ymale_ is also significant at $\alpha$ = 0.05 in Model 3. _ymale_ was not significant when included along with Model 2. This makes us think it was biased by omitted variables like _mix_ or _probarr_. 
 
-The proportion of crimes resulting in arrests, _probarr_, should negatively influence crime rate, intuitively, in the same way that increased ticketing on highways should reduce speeding. The histogram and number of observations are shown below.
+**Coefficient Interpretations and Practical Significance of Model 2**
+The results shows that a 0.1 unit increase in proportion of conviction is associated with a decrease in crime per 1000 people of 5.3% $((e^{-0.055}-1)*100)$ ( _probconv_ is reported between 0 and 2.2). This is a substantial decrease in crime rate. $\\$
+For every 1% increase in density, the crime per 1000 people go up by approximatley 0.39%. This change is not insignificant $\\$
+A 0.1 unit increase in proportion of sentencing is associated with a decrease in crime per 1000 people of 11.1% ( _probsen_ is reported between 0 and 1.09). This represents a large effect size. $\\$
+Finally a 1 percentage point increase in percentage of minorities is associated with a increase in crime per 1000 people of 1.2%. The reasoning behind this is not clear but is likely a reflection of low income. We revisit this topic under Causality later.
 
-The histogram above shows an approximately normal distribution. With 90 observations, the central limit theorem (CLT) can be relied upon to make an inference about this variable's regression coefficient as it corresponds to the population.
+Thus all four variables in Model 2 have practical significance.  
 
-The average prison sentence length, _avgsen_, like _probarr_, should also negatively influence crime rate, as longer sentences increase the consequences to committing a crime.
+## Causality
 
-
-The prison sentence length distribution, above, is approximately normal with a positive skew, likely due to the fact that the metric is zero-bounded. As with _probarr_, 90 observations is sufficient to rely on the CLT for population inferences.
-
-
-
-
-
+It is tempting to claim Model 2 to be a causal model, with _probconv_ being the strongest causal factor in reducing crime rate. However such a claim will be misleading given that causality requires us to manipulate the variable while keeping all other factors constant, which is not possible. Also it is well known that low income is highly associated with and likely causally related to crime. This information is omitted from our model.  Perhaps recording data before and after a policy change to see how crime rates are affected would enable us to make some stronger causal claims. However without a controlled experiment, there will still be a lot of uncertainity. 
 
 
-The variable describing people per square mile, _density_, is a more detailed indicator of urban versus non-urban environments than the boolean varianble, _urban_. Density should also influence crime rate, either positively or negatively, since 'haves' and 'havenots' become closer together at higher densities, yet higher density areas also result in more witnesses to deter face-to-face crime.
+**Omitted variable bias** 
+The absence of economic and standard of living information leaves open to question our estimates, since they are well known factors assoicated with crime rate. For example, income levels are not present in our model and probably bias our key variable _probconv_, since income level determines the quality and amount of legal representation in court. Income level probably has a negative correlation with _probconv_ and a negative correlation with _crime_ leading to an upward bias for coefficient of _probconv_.
+
+Because of the manner in which population density influences living conditions (ie: houses vs. apartment complexes), it is also likely to be correlated with both poverty and crime. More densely populated neighborhoods tend to be poorer. Since our dataset does not provide us good information on income level in each county or unemployment rate in each county, coefficient for density has an omitted variable bias. Since poverty level probably has a high positive correlation with density as well as crime, the coefficient of density has an upward bias.
 
 
+## Recommendations
 
-Density's distribution has a strong positive skew, due to the zero bound. Despite the skew, the CLT can still be relied upon for population inferences, as the number of observations, 90, is sufficient.
+Our analysis highlights _probconv_ and _probsen_ as strong deterrence of crime. The campaign should use this analysis to propose actions that can reduce the crime rate like police and investigation training to improve court case outcomes as well as better prosecution (lawyer training, reduce prosecutor caseloads) to increase conviction rates. To increase the probability of sentence, the law needs to be expanded to include mandatory sentences for certain crimes. 
 
-Average wages, _avgwage_ is a variable created below by concatenating each wage variable in the dataset together. In this way, average wages for each county can be modeled against crime.
+## Conclusion
 
+We started with a detailed exploratory analysis of the dataset to identify strong candidates as inputs to our models. We developed three models starting with the strongest variables and checked whether the Classical Linear Model assumptions were satisfied. We also compared the relative qualities of the models balancing accuracy with parsimony. We identified four variables with the least bias that are associated with crime rates - probability of conviction, probability of sentencing, density and proportion of minority or nonwhite. The associations were in the expected direction. However more data on economic factor will improve the model and reduce bias. 
 
-```{r}
-avgwage = (wagecon + wagetuc + wagetrd + wagefir +
-        wageser + wagemfg + wagefed + wagesta + 
-                wageloc)/9
-
-length(avgwage)
-hist(avgwage, breaks = 20, main = "Average Wage", xlab = "Wage")
-```
-Average wage also has an approximately normal distribution, with a positive skew. 
-********************************************************
-
-
-
-Omitted variable bias
-
-Because of the manner in which population density influences living conditions (ie: houses vs. apartment complexes), it is also likely to be correlated with both poverty and crime. Studies have found that "more densely populated neighborhoods tend to be poorer, have higher percentages of persons in the age range of 12 to 20, have larger concentrations of single-parent households". Since our dataset does not provide us good information on income level in each county or unemployment rate in each county, the omitted variable bias is showing up in high coefficient for density. Since poverty level has a high positive correlation with density as well as crime, the coefficient of density has an upward bias.
-
-
-Conclusion
-
-Although this analysis provides an interesting outlook on the relationship between crime , it has various shortcomings. The small scope of this examination yields a lack of some key independent variables and results omitted variable bias. For a more accurate picture of the relationship between poverty and crime, variables such as income level, family structure, climate, divorce rate, unemployment rate, and educational attainment could be added. Crime may be influenced by trends within a city that cannot be measured by any variables, so time series data of the counties could help capture characteristics specific to a certain Area and would be helpful in this study.
+Although this analysis provides an interesting outlook on the relationship between crime and several key variables, it has a few shortcomings. The small scope of this examination yields a lack of some key independent variables and results omitted variable bias. 
 
 
 
 
-
-
-
-
+*****
+In real world scenarios when we are looking to answer questions, looking to take actions based on trends or associations, we should strive to avoid endogeneity bias by having a solid understanding of the domain to account for omitted variable bias. 
