@@ -163,7 +163,7 @@ _log(density)_: since this variable shows the strongest linear relationship with
 _probconv_ and _probsen_: our intuition that an increase in conviction and sentencing rates helps reduce crime rate is supported by the scatterplot in our EDA.
 
 ```{r}
-model1 = lm(log(scaledcrime) ~ probconv + probsen + log(density))
+model1 = lm(log(scaledcrime) ~ probconv + log(density))
 ```
 
 #### Testing the validity of the 6 assumptions of the CLM
