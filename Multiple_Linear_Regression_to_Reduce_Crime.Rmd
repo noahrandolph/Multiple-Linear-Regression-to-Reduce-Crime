@@ -1,6 +1,6 @@
 ---
-title: "Lab 4: Reducing Crime"
-author: "Asha Anju, Anamika Sinha, Noah Randolph"
+title: "Multiple Linear Regression to Reduce Crime"
+author: "Noah Randolph, Asha Anju, Anamika Sinha"
 date: "8/20/2017"
 output: pdf_document
 ---
